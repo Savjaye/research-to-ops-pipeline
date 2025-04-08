@@ -53,4 +53,6 @@ Download the following CSV files from the SDSC research server:
  ./tables/sourceTables/
 
  ###  Step 4: Run the Pipeline
+ ```bash
  python3.12 migration.py
+ ```
