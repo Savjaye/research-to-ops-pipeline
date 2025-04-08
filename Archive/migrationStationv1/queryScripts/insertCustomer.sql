@@ -1,0 +1,1 @@
+INSERT INTO public."Customers"("CustomerID", "CustomerName") VALUES(9, 'Savannah');

@@ -1,0 +1,38 @@
+SELECT table_name, column_name, data_type, character_maximum_length
+FROM information_schema.columns
+WHERE table_schema = 'adrc'
+AND column_name IN (
+    'dob', 
+    'demographic_sex_at_birth', 
+    'demographic_gender', 
+    'demographic_marital_status_combo', 
+    'subject_occupation', 
+    'hispanic', 
+    'demographic_race', 
+    'education_level', 
+    'education_highest', 
+    'demographic_language_testing', 
+    'demographic_language_caregiver', 
+    'ms_stroke', 
+    'ms_cancer', 
+    'ms_diabetes_insulindep', 
+    'ms_headtraum_wloss', 
+    'ms_psychiatric_dx', 
+    'ms_dementia_dx', 
+    'ms_mci_dx', 
+    'ad_disease_modifying', 
+    'ad_symptomatic', 
+    'ms_famhxad', 
+    'demographic_procedure_agree_consent_imaging_con', 
+    'demographic_procedure_agree_consent_pet_imaging_con', 
+    'demographic_procedure_agree_lumbar_puncture_con', 
+    'naccid', 
+    'dod', 
+    'time_died', 
+    'cause_of_death', 
+    'path_id', 
+    'subject_status_adrc_xfer_name', 
+    'subject_status_adrc_xfer', 
+    'subject_status_adrc_xfer_direction', 
+    'veteran'
+);

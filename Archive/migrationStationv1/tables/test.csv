@@ -1,0 +1,33 @@
+table_name,column_name,data_type
+tbl_subject,education_level,integer
+tbl_subject,dob,date
+tbl_subject,dod,date
+tbl_subject,naccid,character varying
+tbl_subject,demographic_procedure_agree_consent_imaging_con,character varying
+tbl_subject,demographic_procedure_agree_lumbar_puncture_con,character varying
+tbl_subject,demographic_procedure_agree_consent_pet_imaging_con,character varying
+tbl_subject,time_died,character varying
+tbl_subject,cause_of_death,character varying
+tbl_subject,path_id,character varying
+tbl_subject,demographic_sex_at_birth,character varying
+tbl_subject,demographic_gender,character varying
+tbl_subject,demographic_marital_status_combo,character varying
+tbl_subject,subject_occupation,character varying
+tbl_subject,veteran,character varying
+tbl_subject,demographic_race,character varying
+tbl_subject,hispanic,character varying
+tbl_subject,education_highest,character varying
+tbl_subject,demographic_language_testing,character varying
+tbl_subject,demographic_language_caregiver,character varying
+tbl_subject_screen,ms_stroke,character varying
+tbl_subject_screen,ms_cancer,character varying
+tbl_subject_screen,ms_psychiatric_dx,character varying
+tbl_subject_screen,ms_dementia_dx,character varying
+tbl_subject_screen,ms_mci_dx,character varying
+tbl_subject_screen,ad_disease_modifying,character varying
+tbl_subject_screen,ad_symptomatic,character varying
+tbl_subject,subject_status_adrc_xfer,character varying
+tbl_subject_screen,ms_famhxad,character varying
+tbl_subject,subject_status_adrc_xfer_direction,character varying
+tbl_subject,subject_status_adrc_xfer_name,character varying
+(31 rows)

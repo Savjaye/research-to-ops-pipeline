@@ -1,0 +1,1 @@
+\copy public.test FROM '/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables/outv1.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', NULL '', QUOTE '"');
