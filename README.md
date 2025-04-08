@@ -31,7 +31,7 @@ Make sure you can SSH into the operations server that houses the TRAC PostgreSQL
 ```bash
 git clone https://github.com/your-username/research-to-ops-pipeline.git
 cd research-to-ops-pipeline
-
+```
 ###  Step 3: Download Required Tables
 
 Download the following CSV files from the SDSC research server:
