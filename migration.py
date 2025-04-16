@@ -11,6 +11,7 @@ import combo_mappings
     # IF adding new sdsc table - update readSourceData where * present
     # IF adding to new TRAC table - update sql proceudre
 
+# this functions flips through each of the queries in './queryScripts' and executes them on the server using ./operationResearchMigration
 def executeQueryLocaly(queryPath, scriptPath, outPath=None):
 
     queries_dir = Path(queryPath)
@@ -41,16 +42,26 @@ def readSourceData(Template):
      a1 = pd.read_csv("./tables/sourceTables/uds_a1subdemo.csv", low_memory=False, na_values=-4) 
      a4a = pd.read_csv("./tables/sourceTables/uds_a4ard.csv", low_memory=False, na_values=-4)
      c1 = pd.read_csv("./tables/sourceTables/uds_c1npsyb.csv", low_memory=False, na_values=-4)
+     
+     a3 = pd.read_csv("./tables/sourceTables/uds_a3xfhs.csv", low_memory=False, na_values=-4)
+     # pre-process the A3 to get 
+     a3 = a3[["RID", "VISCODE", "FHS01ETPR", "FHS01ETSEC"]]
+     a3 = (
+        a3.groupby(["RID", "VISCODE"])
+        .agg(lambda x: x.isin([1, 2, 3, 5, 6, 11]).any() if x.isin else None)
+        .reset_index()
+    )
+     a3.to_csv("./tables/output/a3TEST.csv", index= False)
+
 
      a5 = pd.read_csv("./tables/sourceTables/uds_a5subhst.csv", low_memory=False, na_values=-4)
-     # pre-process the A5 
+     # pre-process the A5 because it used to be collected at year one only 
      a5["VISIT"] = a5["VISCODE"].str.extract(r"y(\d+)", expand=False).astype(int)
      a5 = a5.loc[a5.groupby("RID")["VISIT"].idxmax()]
      a5 = a5.drop("VISCODE", axis=1)
 
      a2 = pd.read_csv("./tables/sourceTables/uds_a2infdemo.csv", low_memory=False, na_values=-4)
      registry = pd.read_csv("./tables/sourceTables/uds_registry.csv", low_memory=False, na_values=-4)
-     #path = pd.read_csv("./tables/sourceTables/path_path.csv", low_memory=False, na_values=-4)
      b4 = pd.read_csv("./tables/sourceTables/uds_b4cdr.csv", low_memory=False, na_values=-4)
      enroll = pd.read_csv("./tables/sourceTables/uds_naccenroll.csv", low_memory=False, na_values=-4)
      d1 = pd.read_csv("./tables/sourceTables/uds_d1clindx.csv", low_memory=False, na_values=-4)
@@ -64,8 +75,8 @@ def readSourceData(Template):
                 "c1" : c1, 
                 "a5" : a5, 
                 "a2" : a2,
+                "a3" : a3,
                 "registry" : registry,
-                #"path" : path,
                 "b4" : b4,
                 "enroll" : enroll, 
                 "lhq" : lhq
@@ -88,7 +99,8 @@ def readSourceData(Template):
      df_temp6 = pd.merge(df_temp5, df_dict["b4"], on=["RID", "VISCODE"], how="outer")
      df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
      df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
-     source_df = pd.merge(df_temp8, df_dict["roster"], on="RID", how="outer")
+     df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID", "VISCODE"], how="outer")
+     source_df = pd.merge(df_temp9, df_dict["roster"], on="RID", how="outer")
 
      # grab out the data associated with the most recent year
      source_df = source_df.dropna(subset=["VISCODE"]) # remove anyone with a missing year
@@ -185,7 +197,8 @@ def transformSourceData(Template, source_df):
     "demographic_language_2_degree",
     "demographic_language_3",
     "demographic_language_3_degree",
-    "moca_mis"
+    "moca_mis",
+    "ms_famhxad"
 ]
     source_df = source_df[trac_var_names]
     #print(source_df["demographic_marital_status_combo"])
@@ -242,7 +255,8 @@ def transformSourceData(Template, source_df):
     "demographic_language_2",
     "demographic_language_2_degree",
     "demographic_language_3",
-    "demographic_language_3_degree"
+    "demographic_language_3_degree",
+    "ms_famhxad"
 ]
     actual_cols = source_df.columns.tolist()
 
@@ -270,7 +284,7 @@ transformed_table_name = "outv1.csv"
 template = pd.read_csv("./tables/template/template.csv")
 sdsc_df = readSourceData(template)
 transformSourceData(template, sdsc_df)
-copyTranfomedDataToServer()
+#copyTranfomedDataToServer()
 
 # before you run this, your 'test' table has to have all the columns listed on outv1.csv
-executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
+#executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
