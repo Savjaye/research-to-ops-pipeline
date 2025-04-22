@@ -44,13 +44,14 @@ def readSourceData(Template):
      c1 = pd.read_csv("./tables/sourceTables/uds_c1npsyb.csv", low_memory=False, na_values=-4)
      
      a3 = pd.read_csv("./tables/sourceTables/uds_a3xfhs.csv", low_memory=False, na_values=-4)
-     # pre-process the A3 to get 
-     a3 = a3[["RID", "VISCODE", "FHS01ETPR", "FHS01ETSEC"]]
-     a3 = (
-        a3.groupby(["RID", "VISCODE"])
-        .agg(lambda x: x.isin([1, 2, 3, 5, 6, 11]).any() if x.isin else None)
-        .reset_index()
-    )
+     # pre-processing of the A3 is necessary because the information within a row is not sufficient to calculate ms_famhx
+     # we need information across rows because an entery in made for each family member 
+
+     a3 = a3[["RID", "FHS01ETPR", "FHS01ETSEC"]]
+
+    
+     # don't group by 'VISCODE'... if someone has reported family history at any point, it should be 'ms_famhx' should be 'Yes' irrespective of the year
+     a3 = a3.groupby(["RID"]).agg(lambda x: 1 if bool(x.isin([1, 2, 3, 5, 6, 11]).any()) else 0 if x.notna().any() else 9).reset_index()
      a3.to_csv("./tables/output/a3TEST.csv", index= False)
 
 
@@ -99,7 +100,7 @@ def readSourceData(Template):
      df_temp6 = pd.merge(df_temp5, df_dict["b4"], on=["RID", "VISCODE"], how="outer")
      df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
      df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
-     df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID", "VISCODE"], how="outer")
+     df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID"], how="outer")
      source_df = pd.merge(df_temp9, df_dict["roster"], on="RID", how="outer")
 
      # grab out the data associated with the most recent year
@@ -205,7 +206,6 @@ def transformSourceData(Template, source_df):
     # Convert all float64 columns that have only whole numbers to Int64
     source_df = source_df.convert_dtypes()
     for col in source_df.select_dtypes(include=["float64"]).columns:
-        print(col)
         if (source_df[col].dropna() % 1 == 0).all():  # Check if all non-null values are whole numbers
             source_df[col] = source_df[col].astype("Int64")  # Convert to Int64
 
@@ -271,7 +271,7 @@ def transformSourceData(Template, source_df):
 
 def copyTranfomedDataToServer():
      cmd = ["scp", "-i", "~/.ssh/id_adrc_rsa", "-P", "9221",
-            "/Users/savannahhargrave/adrc/TRAC/migrationStation/tables/output/outv1.csv",
+            "./tables/output/outv1.csv",
             "adrc-admin@adrc-trac.ucsd.edu:/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables"]
      print("Enter Password To Copy Data To Server")
      subprocess.run(cmd, check=True)
@@ -284,7 +284,7 @@ transformed_table_name = "outv1.csv"
 template = pd.read_csv("./tables/template/template.csv")
 sdsc_df = readSourceData(template)
 transformSourceData(template, sdsc_df)
-#copyTranfomedDataToServer()
+copyTranfomedDataToServer()
 
 # before you run this, your 'test' table has to have all the columns listed on outv1.csv
-#executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
+executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")

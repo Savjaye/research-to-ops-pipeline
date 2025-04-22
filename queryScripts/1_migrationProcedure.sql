@@ -8,7 +8,7 @@ BEGIN
         demographic_race, ms_cancer, ms_diabetes_insulindep, ms_headtraum_wloss, ms_psychiatric_dx, ms_stroke,
         subject_occupation, veteran, demographic_gender, education_level, mmse,lst_moca, lst_drs, 
         naccid, subject_status_adrc_xfer, subject_status_adrc_xfer_name, cdrglob,
-        screen_contact_memory_prob, contact_memory_prob,
+        screen_contact_memory_prob, ms_famhxad, contact_memory_prob,
         referral_source_combo, referral_comments, relationship_with_subject,contact_memory_prob_onset_yr, yr_in_study, visits_mmse, visits_mmse_date, visits_moca, visits_moca_date, visits_drs, visits_drs_date, 
         demographic_language_1, demographic_language_1_degree, demographic_language_2, demographic_language_2_degree, demographic_language_3, demographic_language_3_degree, moca_mis
     ) 
@@ -22,7 +22,7 @@ BEGIN
             tbl_subject.subject_occupation, tbl_subject.veteran, tbl_subject.demographic_gender, tbl_subject.education_level, 
             tbl_subject.mmse, tbl_subject.lst_moca, tbl_subject.lst_drs, 
             tbl_subject.naccid, tbl_subject.subject_status_adrc_xfer_name, tbl_subject.subject_status_adrc_xfer, tbl_subject.cdrglob,
-            tbl_subject_screen.contact_memory_prob AS screen_contact_memory_prob, tbl_visits.contact_memory_prob, tbl_recruitment.referral_source_combo,
+            tbl_subject_screen.contact_memory_prob AS screen_contact_memory_prob, tbl_subject_screen.ms_famhxad, tbl_visits.contact_memory_prob, tbl_recruitment.referral_source_combo,
             tbl_recruitment.referral_comments, tbl_subject_contacts.relationship_with_subject, tbl_visits.contact_memory_prob_onset_yr, tbl_visits.yr_in_study, tbl_visits.mmse AS visits_mmse, tbl_visits.mmse_date AS visits_mmse_date,
             tbl_visits.moca AS visits_moca, tbl_visits.moca_date AS visits_moca_date, tbl_visits.drs AS visits_drs, tbl_visits.drs_date AS visits_drs_date,
             tbl_subject.demographic_language_1, tbl_subject.demographic_language_1_degree, tbl_subject.demographic_language_2, tbl_subject.demographic_language_2_degree, tbl_subject.demographic_language_3, tbl_subject.demographic_language_3_degree, adrc.tbl_visits.moca_mis AS moca_mis
@@ -64,6 +64,31 @@ BEGIN
     FROM public.test AS t
     WHERE s.adrc_long_id = t.adrc_long_id;
 
+
+    INSERT INTO adrc.tbl_subject_screen(subject_id,
+    ad_disease_modifying,
+    ad_symptomatic,
+    ms_cancer,
+    ms_diabetes_insulindep,
+    ms_headtraum_wloss,
+    ms_psychiatric_dx,
+    ms_stroke,
+    contact_memory_prob,
+    ms_famhxad)
+    SELECT s.id,
+    t.ad_disease_modifying,
+    t.ad_symptomatic,
+    t.ms_cancer,
+    t.ms_diabetes_insulindep,
+    t.ms_headtraum_wloss,
+    t.ms_psychiatric_dx,
+    t.ms_stroke,
+    t.contact_memory_prob,
+    t.ms_famhxad
+    FROM public.test AS t
+    LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
+    WHERE s.id NOT IN (SELECT DISTINCT subject_id FROM adrc.tbl_subject_screen);
+
     UPDATE adrc.tbl_subject_screen AS sc
         SET 
         ad_disease_modifying = COALESCE(t.ad_disease_modifying, sc.ad_disease_modifying),
@@ -73,7 +98,8 @@ BEGIN
         ms_headtraum_wloss = COALESCE(t.ms_headtraum_wloss, sc.ms_headtraum_wloss),
         ms_psychiatric_dx = COALESCE(t.ms_psychiatric_dx, sc.ms_psychiatric_dx),
         ms_stroke = COALESCE(t.ms_stroke, sc.ms_stroke),
-        contact_memory_prob = COALESCE(t.contact_memory_prob, sc.contact_memory_prob)
+        contact_memory_prob = COALESCE(t.contact_memory_prob, sc.contact_memory_prob),
+        ms_famhxad = COALESCE(t.ms_famhxad, sc.ms_famhxad)
     FROM public.test AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE sc.subject_id = s.id;
@@ -108,6 +134,6 @@ BEGIN
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE v.subject_id = s.id AND v.yr_in_study=t.yr_in_study;
 
-    --DELETE FROM public.test;
+    DELETE FROM public.test;
 
 END $$;

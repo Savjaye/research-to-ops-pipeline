@@ -48,5 +48,6 @@ CREATE TABLE public.version_control (
     demographic_language_2_degree VARCHAR(255),
     demographic_language_3 VARCHAR(255),
     demographic_language_3_degree VARCHAR(255),
-    moca_mis INTEGER
+    moca_mis INTEGER,
+    ms_famhxad VARCHAR(255)
 );
