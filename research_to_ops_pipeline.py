@@ -4,14 +4,15 @@ import pandas as pd
 from functools import reduce
 import combo_mappings 
 
-# steps for adding fields
-    # update template
-    # update public.test schema 
-    # update trac_var_name (the variable in this script)
-    # IF adding new sdsc table - update readSourceData where * present
-    # IF adding to new TRAC table - update sql proceudre
+# --- Notes for Adding New Fields ---
+# 1. Update the template file (tables/template/template.csv).
+# 2. Update public.test schema if needed.
+# 3. Add the field to 'trac_var_name' (variable in this script that ensure the output (outv1.csv matches the schema of the read-in table)).
+# 4. If pulling from a new SDSC table, update readSourceData().
+# 5. If inserting into a new TRAC table, update SQL procedures.
 
-# this functions flips through each of the queries in './queryScripts' and executes them on the server using ./operationResearchMigration
+
+# --- this functions flips through each of the queries in './queryScripts' and executes them locally on the server using ./operationResearchMigration ---
 def executeQueryLocaly(queryPath, scriptPath, outPath=None):
 
     queries_dir = Path(queryPath)
@@ -24,6 +25,7 @@ def executeQueryLocaly(queryPath, scriptPath, outPath=None):
 
     for query in query_files:
         
+        # if there is an output driectory specifies, pass it to the script 
         if outPath:
             cmd = [str(script_path), str(query), out_dir]
         else:
@@ -31,7 +33,7 @@ def executeQueryLocaly(queryPath, scriptPath, outPath=None):
         print(f"Enter Password To  Run {query} Command Locally")
         subprocess.run(cmd, check=True)
 
-# this function retrieves data from SDSC and returns the relevant fields in a single df
+# ---- Reads raw CSV's, preprocesses (is necessary), merges into single dataframe, selects data associated with most recent year ----
 def readSourceData(Template):
      
      # save cross walk to variable
@@ -49,14 +51,14 @@ def readSourceData(Template):
 
      a3 = a3[["RID", "FHS01ETPR", "FHS01ETSEC"]]
 
-    
+     # ---- preprocessing of A3: we need to create an indicator by looking across rows before we send it to be transformed. Transformation function looks across columns only ---
      # don't group by 'VISCODE'... if someone has reported family history at any point, it should be 'ms_famhx' should be 'Yes' irrespective of the year
      a3 = a3.groupby(["RID"]).agg(lambda x: 1 if bool(x.isin([1, 2, 3, 5, 6, 11]).any()) else 0 if x.notna().any() else 9).reset_index()
      a3.to_csv("./tables/output/a3TEST.csv", index= False)
 
 
      a5 = pd.read_csv("./tables/sourceTables/uds_a5subhst.csv", low_memory=False, na_values=-4)
-     # pre-process the A5 because it used to be collected at year one only 
+     # --- pre-process the A5 because it used to be collected at year one only ----
      a5["VISIT"] = a5["VISCODE"].str.extract(r"y(\d+)", expand=False).astype(int)
      a5 = a5.loc[a5.groupby("RID")["VISIT"].idxmax()]
      a5 = a5.drop("VISCODE", axis=1)
@@ -68,7 +70,7 @@ def readSourceData(Template):
      d1 = pd.read_csv("./tables/sourceTables/uds_d1clindx.csv", low_memory=False, na_values=-4)
      lhq = pd.read_csv("./tables/sourceTables/uds_lhqrev.csv", low_memory=False, na_values=-4)
     
-    # save dfs and names to  a dict*
+    # --- organize all the loaded dataframes ---
      df_dict = {
                 "roster" : roster, 
                 "a1" : a1, 
@@ -82,21 +84,19 @@ def readSourceData(Template):
                 "enroll" : enroll, 
                 "lhq" : lhq
      }
-    # select the appropriate columns and update the dictionary with reduced df
+    # --- subset each table to extract only the required fields (as defined in template.csv)
      for name, df in df_dict.items(): # for each sdsc_table
           df_fields = tmp[tmp["sdsc_table"].str.lower() == name]["sdsc_var_name"] # grab columns (as defined in tmp) associated with each sdsc_table
           df = df_dict[name][df_fields] # subset each sdsc_table  to get only the needed rows
           df_dict[name] = df # save the subsetted data to the dict 
     
-    # Now perform individual merges*:
+    # Now perform individual merges:
      print("!! GETTING ERROR ON MERGE? - Did you add the columns you are joining ON to the template (tmp)?")
      df_temp1 = pd.merge(df_dict["a1"], df_dict["c1"], on=["RID", "VISCODE"], how="outer")
      df_temp2 = pd.merge(df_temp1, df_dict["a4a"], on=["RID", "VISCODE"], how="outer")
      df_temp3 = pd.merge(df_temp2, df_dict["a5"], on=["RID"], how="outer")
-     #print("Columns in a2 DataFrame:", df_dict["a2"].columns)
      df_temp4 = pd.merge(df_temp3, df_dict["a2"], on=["RID", "VISCODE"], how="outer")
      df_temp5 = pd.merge(df_temp4, df_dict["registry"], on=["RID", "VISCODE"], how="outer")
-     #df_temp5 = pd.merge(df_temp4, df_dict["path"], on=["RID"], how="outer")
      df_temp6 = pd.merge(df_temp5, df_dict["b4"], on=["RID", "VISCODE"], how="outer")
      df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
      df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
@@ -108,11 +108,13 @@ def readSourceData(Template):
      source_df["VISIT"] = source_df["VISCODE"].str.extract(r"y(\d+)", expand=False).astype(int) # extract their visit year 
      most_recent_vis_source_df = source_df.loc[source_df.groupby("RID")["VISIT"].idxmax()] # grad row associated with most recent visit year
      most_recent_vis_source_df.dropna(subset="REGTRYID", inplace = True)
+
+     # export for bug testing 
      most_recent_vis_source_df.to_csv("./tables/output/sdsc.csv", index= False)
      print("SDSC Data Accessed")
      return most_recent_vis_source_df
      
-  
+# --- Applies transformation mappings to match TRAC schema ---
 def transformSourceData(Template, source_df):
 
     tmp = Template
@@ -147,7 +149,7 @@ def transformSourceData(Template, source_df):
             }
          source_df[field] = source_df.apply(lambda row: eval(transformation_code, {**combo_context, "row": row}),axis=1)
          #for index, row in source_df.iterrows():
-            #source_df.at[index, field] = eval(tranformation_code)
+            #source_df.at[index, field] = eval(transformation_code)
 
     # remove the fields that dont have a direct mapping ex: RID, VISCODE, any fields that are combined with others 
     sdsc_fields_without_trac_mapping = [field for field in tmp["sdsc_var_name"] if tmp[tmp["sdsc_var_name"]==field]["trac_var_name"].isnull().all() and pd.notnull(field) and field != "VISITDATE"] # VISITDATE will be converted to VISITDATE_x and VISITDATE_y because we need to different ones
@@ -203,6 +205,7 @@ def transformSourceData(Template, source_df):
 ]
     source_df = source_df[trac_var_names]
     #print(source_df["demographic_marital_status_combo"])
+
     # Convert all float64 columns that have only whole numbers to Int64
     source_df = source_df.convert_dtypes()
     for col in source_df.select_dtypes(include=["float64"]).columns:
@@ -211,7 +214,7 @@ def transformSourceData(Template, source_df):
 
     source_df.to_csv("./tables/output/outv1.csv", index=False, date_format="%Y-%m-%d")
 
-    #test! 
+    #test for missing or extra columns - this is a not an essential step to maintain but is very helpful for bug testing when updating 
     expected_cols = [
     "demographic_gender",
     "demographic_marital_status_combo",
@@ -269,22 +272,20 @@ def transformSourceData(Template, source_df):
 
 
 
-def copyTranfomedDataToServer():
+# --- Securely copies transformed CSV to server ---
+def copyTransfomedDataToServer():
      cmd = ["scp", "-i", "~/.ssh/id_adrc_rsa", "-P", "9221",
             "./tables/output/outv1.csv",
             "adrc-admin@adrc-trac.ucsd.edu:/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables"]
      print("Enter Password To Copy Data To Server")
      subprocess.run(cmd, check=True)
 
-def insertTargetData():
-     a=3
-
-#
+# --- MAIN SCRIPT EXECUTION ---
 transformed_table_name = "outv1.csv"
 template = pd.read_csv("./tables/template/template.csv")
 sdsc_df = readSourceData(template)
 transformSourceData(template, sdsc_df)
-copyTranfomedDataToServer()
+copyTransfomedDataToServer()
 
 # before you run this, your 'test' table has to have all the columns listed on outv1.csv
 executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
