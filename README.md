@@ -119,3 +119,51 @@ The files are **numbered** (`0_`, `1_`, `2_`) because **they must be executed in
 - These scripts are executed automatically by the `research_to_ops_pipeline.py` script using `operationResearchMigration.sh`.
 - Keeping the numbering system (`0_`, `1_`, `2_`) is crucial to prevent logical errors during the migration process.
 - If changes are made to the TRAC database schema, these scripts may need to be updated accordingly.
+
+### `operationResearchMigration.sh`
+
+**Purpose:**  
+This Bash script is used to **execute SQL queries on the production TRAC server from the local machine**.
+
+It is automatically called by the `executeQueryLocaly()` function inside `research_to_ops_pipeline.py`.
+
+---
+
+**Summary of Workflow:**
+- **SSHs** into the TRAC production server using your saved private key (`~/.ssh/id_adrc_rsa`).
+- **Executes** the `.sql` scripts located in the `queryScripts/` directory against the TRAC database.
+- **Automates** query execution so users don't have to manually SSH and type commands.
+
+---
+
+**Notes:**
+- **SSH Access Required:**  
+  You must have SSH access to `adrc-trac.ucsd.edu` with the correct private key.  
+  See the [Appendix in the guide](https://docs.google.com/document/d/1RbJdK05GV0i78IYPc521CvKf5H9oPlrgtkRVXOUEhYc/edit?tab=t.0) for instructions on setting up SSH if needed.
+
+### `sqlTables/`
+
+**Purpose:**  
+This directory contains SQL scripts for two essential tables required by the pipeline:
+
+- A **read-in staging table** (`public.test`) where the transformed dataset is initially loaded.
+- A **version control table** that logs and preserves values overwritten during the migration process.
+
+These tables **should already exist in the TRAC production database**, but keeping their definitions here ensures that the project remains **self-contained and reproducible**.
+
+---
+
+### `combo_mappings.py`
+
+**Purpose:**  
+This file defines all of the **mapping dictionaries** used in the transformation step to convert values from the **SDSC research database** format to the **TRAC operations schema**.
+
+Mappings include:
+- Gender
+- Marital status
+- Education levels
+- Language proficiency
+- Binary flags (e.g., yes/no fields)
+- And other categorical variables
+
+These mappings are referenced dynamically within `research_to_ops_pipeline.py` during the transformation phase.
