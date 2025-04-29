@@ -54,5 +54,39 @@ Download the following CSV files from the SDSC research server:
 
  ###  Step 4: Run the Pipeline
  ```bash
- python3.12 migration.py
+ python3.12 research_to_ops_pipeline.py
  ```
+
+ ## Directory Tour
+
+### `research_to_ops_pipeline.py`
+**Purpose:**  
+This is the *main script* that orchestrates the entire pipeline from start to finish.
+
+**Summary of Workflow:**
+- **Reads** CSV extracts from the research database (located in `./tables/sourceTables/`).
+- **Preprocesses** tables where needed (e.g., special handling for family history in the A3 table).
+- **Merges** tables together into a unified dataframe.
+- **Selects** only the most recent visit year for each participant.
+- **Transforms** the dataset:
+  - Renames columns based on a standardized template (`./tables/template/`).
+  - Applies any necessary calculated transformations (defined in the template).
+- **Formats** the final dataframe to match the exact structure expected by the TRAC operations database.
+- **Exports** the final dataset to a CSV (`outv1.csv`) and **copies it to the TRAC server** via SSH/SCP.
+- **Executes** a series of SQL scripts (stored in `./queryScripts/`) on the TRAC server to insert/update the database with the transformed data.
+
+**Inputs:**
+- Tables in `./tables/sourceTables/`
+- Transformation Template in `./tables/template/template.csv`
+
+**Outputs:**
+- Final transformed CSV: `./tables/output/outv1.csv`
+- Updates to the TRAC PostgreSQL database via SQL scripts.
+
+**Notes:**
+- **Adding New Fields:**  
+  If the research database schema or the TRAC target table changes (e.g., new fields added), this script must be updated.  
+  See the "Updating the Pipeline" section of the [SOP](https://docs.google.com/document/d/1RbJdK05GV0i78IYPc521CvKf5H9oPlrgtkRVXOUEhYc/edit?tab=t.0) for full instructions.
+- **Additional Documentation** can be found in the script's comments
+
+
