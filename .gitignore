@@ -18,3 +18,5 @@ UDS/uds_roster.csv
 
 .DS_Store
 
+Archive/
+__pycache__/

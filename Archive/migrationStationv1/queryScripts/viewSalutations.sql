@@ -1,1 +1,0 @@
-SELECT * FROM adrc.combo_salutation;
