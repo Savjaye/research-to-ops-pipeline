@@ -17,6 +17,7 @@ UDS/uds_registry.csv
 UDS/uds_roster.csv
 
 .DS_Store
+.Rhistory
 
 Archive/
 __pycache__/
