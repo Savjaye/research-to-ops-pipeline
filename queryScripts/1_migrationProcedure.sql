@@ -3,37 +3,37 @@ LANGUAGE plpgsql
 AS $$
 BEGIN    
     -- move old data from tbl_subject to the tbl_version_control
-    INSERT INTO public.version_control(migration_id, subject_id, adrc_long_id, ad_disease_modifying, ad_symptomatic, demographic_language_caregiver,
-        demographic_language_testing, demographic_marital_status_combo, demographic_sex_at_birth, dob, education_highest,
-        demographic_race, ms_cancer, ms_diabetes_insulindep, ms_headtraum_wloss, ms_psychiatric_dx, ms_stroke,
-        subject_occupation, veteran, demographic_gender, education_level, mmse,lst_moca, lst_drs, 
-        naccid, subject_status_adrc_xfer, subject_status_adrc_xfer_name, cdrglob,
-        screen_contact_memory_prob, ms_famhxad, contact_memory_prob,
-        referral_source_combo, referral_comments, relationship_with_subject,contact_memory_prob_onset_yr, yr_in_study, visits_mmse, visits_mmse_date, visits_moca, visits_moca_date, visits_drs, visits_drs_date, 
-        demographic_language_1, demographic_language_1_degree, demographic_language_2, demographic_language_2_degree, demographic_language_3, demographic_language_3_degree, moca_mis
-    ) 
-    SELECT 
-            ( SELECT COALESCE(MAX(migration_id), 0) + 1 FROM public.version_control ), tbl_subject.id AS subject_id, tbl_subject.adrc_long_id, tbl_subject_screen.ad_disease_modifying, 
-            tbl_subject_screen.ad_symptomatic, tbl_subject.demographic_language_caregiver, 
-            tbl_subject.demographic_language_testing, 
-            tbl_subject.demographic_marital_status_combo, tbl_subject.demographic_sex_at_birth, tbl_subject.dob, tbl_subject.education_highest, tbl_subject.demographic_race, 
-            tbl_subject_screen.ms_cancer, tbl_subject_screen.ms_diabetes_insulindep, 
-            tbl_subject_screen.ms_headtraum_wloss, tbl_subject_screen.ms_psychiatric_dx, tbl_subject_screen.ms_stroke,
-            tbl_subject.subject_occupation, tbl_subject.veteran, tbl_subject.demographic_gender, tbl_subject.education_level, 
-            tbl_subject.mmse, tbl_subject.lst_moca, tbl_subject.lst_drs, 
-            tbl_subject.naccid, tbl_subject.subject_status_adrc_xfer_name, tbl_subject.subject_status_adrc_xfer, tbl_subject.cdrglob,
-            tbl_subject_screen.contact_memory_prob AS screen_contact_memory_prob, tbl_subject_screen.ms_famhxad, tbl_visits.contact_memory_prob, tbl_recruitment.referral_source_combo,
-            tbl_recruitment.referral_comments, tbl_subject_contacts.relationship_with_subject, tbl_visits.contact_memory_prob_onset_yr, tbl_visits.yr_in_study, tbl_visits.mmse AS visits_mmse, tbl_visits.mmse_date AS visits_mmse_date,
-            tbl_visits.moca AS visits_moca, tbl_visits.moca_date AS visits_moca_date, tbl_visits.drs AS visits_drs, tbl_visits.drs_date AS visits_drs_date,
-            tbl_subject.demographic_language_1, tbl_subject.demographic_language_1_degree, tbl_subject.demographic_language_2, tbl_subject.demographic_language_2_degree, tbl_subject.demographic_language_3, tbl_subject.demographic_language_3_degree, adrc.tbl_visits.moca_mis AS moca_mis
-    FROM adrc.tbl_subject LEFT JOIN adrc.tbl_subject_screen ON adrc.tbl_subject.id = adrc.tbl_subject_screen.subject_id
-    LEFT JOIN adrc.tbl_recruitment ON adrc.tbl_subject.id = adrc.tbl_recruitment.subject_id
-    LEFT JOIN adrc.tbl_subject_contacts ON adrc.tbl_subject.id = adrc.tbl_subject_contacts.subject_id
-        AND adrc.tbl_subject_contacts.contact_type='Informant' AND adrc.tbl_subject_contacts.id  = (SELECT MAX(id) FROM adrc.tbl_subject_contacts WHERE adrc.tbl_subject_contacts.subject_id = adrc.tbl_subject.id AND adrc.tbl_subject_contacts.contact_type='Informant')
-    LEFT JOIN adrc.tbl_visits ON adrc.tbl_subject.id = adrc.tbl_visits.subject_id
-		AND adrc.tbl_visits.yr_in_study = (SELECT MAX(yr_in_study) FROM adrc.tbl_visits WHERE adrc.tbl_visits.subject_id = adrc.tbl_subject.id)
+    --INSERT INTO public.version_control(migration_id, subject_id, adrc_long_id, ad_disease_modifying, ad_symptomatic, demographic_language_caregiver,
+    --    demographic_language_testing, demographic_marital_status_combo, demographic_sex_at_birth, dob, education_highest,
+    --    demographic_race, ms_cancer, ms_diabetes_insulindep, ms_headtraum_wloss, ms_psychiatric_dx, ms_stroke,
+    --    subject_occupation, veteran, demographic_gender, education_level, mmse,lst_moca, lst_drs, 
+    --    naccid, subject_status_adrc_xfer, subject_status_adrc_xfer_name, cdrglob,
+    --    screen_contact_memory_prob, ms_famhxad, contact_memory_prob,
+    --    referral_source_combo, referral_comments, relationship_with_subject,contact_memory_prob_onset_yr, yr_in_study, visits_mmse, visits_mmse_date, visits_moca, visits_moca_date, visits_drs, visits_drs_date, 
+    --    demographic_language_1, demographic_language_1_degree, demographic_language_2, demographic_language_2_degree, demographic_language_3, demographic_language_3_degree, moca_mis
+    --) 
+    --SELECT 
+    --        ( SELECT COALESCE(MAX(migration_id), 0) + 1 FROM public.version_control ), tbl_subject.id AS subject_id, tbl_subject.adrc_long_id, tbl_subject_screen.ad_disease_modifying, 
+    --        tbl_subject_screen.ad_symptomatic, tbl_subject.demographic_language_caregiver, 
+    --        tbl_subject.demographic_language_testing, 
+    --        tbl_subject.demographic_marital_status_combo, tbl_subject.demographic_sex_at_birth, tbl_subject.dob, tbl_subject.education_highest, tbl_subject.demographic_race, 
+    --        tbl_subject_screen.ms_cancer, tbl_subject_screen.ms_diabetes_insulindep, 
+    --        tbl_subject_screen.ms_headtraum_wloss, tbl_subject_screen.ms_psychiatric_dx, tbl_subject_screen.ms_stroke,
+    --        tbl_subject.subject_occupation, tbl_subject.veteran, tbl_subject.demographic_gender, tbl_subject.education_level, 
+    --        tbl_subject.mmse, tbl_subject.lst_moca, tbl_subject.lst_drs, 
+    --        tbl_subject.naccid, tbl_subject.subject_status_adrc_xfer_name, tbl_subject.subject_status_adrc_xfer, tbl_subject.cdrglob,
+    --        tbl_subject_screen.contact_memory_prob AS screen_contact_memory_prob, tbl_subject_screen.ms_famhxad, tbl_visits.contact_memory_prob, tbl_recruitment.referral_source_combo,
+    --        tbl_recruitment.referral_comments, tbl_subject_contacts.relationship_with_subject, tbl_visits.contact_memory_prob_onset_yr, tbl_visits.yr_in_study, tbl_visits.mmse AS visits_mmse, tbl_visits.mmse_date AS visits_mmse_date,
+    --        tbl_visits.moca AS visits_moca, tbl_visits.moca_date AS visits_moca_date, tbl_visits.drs AS visits_drs, tbl_visits.drs_date AS visits_drs_date,
+    --        tbl_subject.demographic_language_1, tbl_subject.demographic_language_1_degree, tbl_subject.demographic_language_2, tbl_subject.demographic_language_2_degree, tbl_subject.demographic_language_3, tbl_subject.demographic_language_3_degree, adrc.tbl_visits.moca_mis AS moca_mis
+    --FROM adrc.tbl_subject LEFT JOIN adrc.tbl_subject_screen ON adrc.tbl_subject.id = adrc.tbl_subject_screen.subject_id
+    --LEFT JOIN adrc.tbl_recruitment ON adrc.tbl_subject.id = adrc.tbl_recruitment.subject_id
+    --LEFT JOIN adrc.tbl_subject_contacts ON adrc.tbl_subject.id = adrc.tbl_subject_contacts.subject_id
+    --    AND adrc.tbl_subject_contacts.contact_type='Informant' AND adrc.tbl_subject_contacts.id  = (SELECT MAX(id) FROM adrc.tbl_subject_contacts WHERE adrc.tbl_subject_contacts.subject_id = adrc.tbl_subject.id AND adrc.tbl_subject_contacts.contact_type='Informant')
+    --LEFT JOIN adrc.tbl_visits ON adrc.tbl_subject.id = adrc.tbl_visits.subject_id
+	--	AND adrc.tbl_visits.yr_in_study = (SELECT MAX(yr_in_study) FROM adrc.tbl_visits WHERE adrc.tbl_visits.subject_id = adrc.tbl_subject.id)
 
-    WHERE adrc.tbl_subject.adrc_long_id IN (SELECT adrc_long_id FROM public.test);
+    --WHERE adrc.tbl_subject.adrc_long_id IN (SELECT adrc_long_id FROM public.test);
 
     UPDATE adrc.tbl_subject AS s
         SET 

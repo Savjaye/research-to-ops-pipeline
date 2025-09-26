@@ -66,6 +66,7 @@ This is the *main script* that orchestrates the entire pipeline from start to fi
 **Summary of Workflow:**
 - **Reads** CSV extracts from the research database (located in `./tables/sourceTables/`).
 - **Preprocesses** tables where needed (e.g., special handling for family history in the A3 table).
+- **Selects** only the relevant columns from each table. This means, for each unique table, merge keys must be defined in your template
 - **Merges** tables together into a unified dataframe.
 - **Selects** only the most recent visit year for each participant.
 - **Transforms** the dataset:
