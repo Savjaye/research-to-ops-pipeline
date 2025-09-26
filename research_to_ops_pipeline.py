@@ -153,14 +153,17 @@ def transformSourceData(Template, source_df):
             "INRELTO_MAP": combo_mappings.INRELTO_MAP,
             "YES_NO_MAP": combo_mappings.YES_NO_MAP,
             "CANCER_DIABETES_STATUS_MAP": combo_mappings.CANCER_DIABETES_STATUS_MAP,
-            "LANGUAGE_PROFICIENCY_MAP" : combo_mappings.LANGUAGE_PROFICIENCY_MAP
+            "LANGUAGE_PROFICIENCY_MAP" : combo_mappings.LANGUAGE_PROFICIENCY_MAP,
+            "RACE_MAP": combo_mappings.RACE_MAP,
+            "GENDER_MAP": combo_mappings.GENDER_MAP,
+            "OCCUPATION_MAP": combo_mappings.OCCUPATION_MAP
             }
          source_df[field] = source_df.apply(lambda row: eval(transformation_code, {**combo_context, "row": row}),axis=1)
          #for index, row in source_df.iterrows():
             #source_df.at[index, field] = eval(transformation_code)
 
     # remove the fields that dont have a direct mapping ex: RID, VISCODE, any fields that are combined with others 
-    sdsc_fields_without_trac_mapping = [field for field in tmp["sdsc_var_name"] if tmp[tmp["sdsc_var_name"]==field]["trac_var_name"].isnull().all() and pd.notnull(field) and field != "VISITDATE"] # VISITDATE will be converted to VISITDATE_x and VISITDATE_y because we need to different ones
+    sdsc_fields_without_trac_mapping = [field for field in tmp["sdsc_var_name"] if tmp[tmp["sdsc_var_name"]==field]["trac_var_name"].isnull().all() and pd.notnull(field) and field != "VISITDATE"] # VISITDATE will be converted to VISITDATE_x and VISITDATE_y so we want to remove dups
     print(f"MISSING MAP {sdsc_fields_without_trac_mapping}")
     #remove RID column 
     source_df.drop(columns=sdsc_fields_without_trac_mapping, inplace=True)
