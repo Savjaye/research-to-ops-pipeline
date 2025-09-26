@@ -15,7 +15,7 @@ UDS/uds_lhqrev.csv
 UDS/uds_naccenroll.csv
 UDS/uds_registry.csv
 UDS/uds_roster.csv
-
+*.csv
 .DS_Store
 .Rhistory
 
