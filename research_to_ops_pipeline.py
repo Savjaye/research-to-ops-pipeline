@@ -5,11 +5,13 @@ from functools import reduce
 import combo_mappings 
 
 # --- Notes for Adding New Fields ---
-# 1. Update the template file (tables/template/template.csv).
-# 2. Update public.test schema if needed.
-# 3. Add the field to 'trac_var_name' (variable in this script that ensure the output (outv1.csv matches the schema of the read-in table)).
-# 4. If pulling from a new SDSC table, update readSourceData().
-# 5. If inserting into a new TRAC table, update SQL procedures.
+# 1. Update the template file (tables/template/template.csv)
+# 2. Update public.tbl_sdsc_staging
+# 3. Add the TRAC field to 'trac_var_name' (variable in this script that ensure the output (outv1.csv matches the schema of the read-in table)).
+# 4. Merge the new sdsc table in with the rest (if applicable)
+    # don't forget to add the new table to the df dict!
+# 5.If pulling from a new SDSC table, update readSourceData().
+# 6. If inserting into a new TRAC table, update SQL procedures.
 
 
 # --- this functions flips through each of the queries in './queryScripts' and executes them on the server using ./operationResearchMigration ---
@@ -69,6 +71,8 @@ def readSourceData(Template):
      enroll = pd.read_csv("./tables/sourceTables/uds_naccenroll.csv", low_memory=False, na_values=-4)
      d1 = pd.read_csv("./tables/sourceTables/uds_d1clindx.csv", low_memory=False, na_values=-4)
      lhq = pd.read_csv("./tables/sourceTables/uds_lhqrev.csv", low_memory=False, na_values=-4)
+     d1= pd.read_csv("./tables/sourceTables/uds_d1consdx.csv", low_memory=False, na_values=-4)
+     m1= pd.read_csv("./tables/sourceTables/uds_m1mstone.csv", low_memory=False, na_values=-4)
     
     # --- organize all the loaded dataframes ---
      df_dict = {
@@ -82,7 +86,9 @@ def readSourceData(Template):
                 "registry" : registry,
                 "b4" : b4,
                 "enroll" : enroll, 
-                "lhq" : lhq
+                "lhq" : lhq,
+                "d1": d1,
+                "m1": m1
      }
     # --- subset each table to extract only the required fields (as defined in template.csv)
 
@@ -107,7 +113,9 @@ def readSourceData(Template):
      df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
      df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
      df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID"], how="outer")
-     source_df = pd.merge(df_temp9, df_dict["roster"], on="RID", how="outer")
+     df_temp10 = pd.merge(df_temp9, df_dict["d1"], on=["RID", "VISCODE"], how="outer")
+     df_temp11 = pd.merge(df_temp10, df_dict["m1"], on=["RID"], how="outer")
+     source_df = pd.merge(df_temp11, df_dict["roster"], on="RID", how="outer")
 
      
 
@@ -156,7 +164,8 @@ def transformSourceData(Template, source_df):
             "LANGUAGE_PROFICIENCY_MAP" : combo_mappings.LANGUAGE_PROFICIENCY_MAP,
             "RACE_MAP": combo_mappings.RACE_MAP,
             "GENDER_MAP": combo_mappings.GENDER_MAP,
-            "OCCUPATION_MAP": combo_mappings.OCCUPATION_MAP
+            "OCCUPATION_MAP": combo_mappings.OCCUPATION_MAP,
+            "STATUS_MAP": combo_mappings.STATUS_MAP
             }
          source_df[field] = source_df.apply(lambda row: eval(transformation_code, {**combo_context, "row": row}),axis=1)
          #for index, row in source_df.iterrows():
@@ -170,7 +179,7 @@ def transformSourceData(Template, source_df):
 
 
 
-    # select out proper field names and order correctly -- **note: this is not dynamically sourced to ensure proper order and compatibility with SQL tbl_test... its picky
+    # select out proper field names and order correctly -- **note: ordering is necessary for loading the table into the staging table into TRAC using the \copy command
     trac_var_names = [
     "adrc_long_id",
     "ad_disease_modifying",
@@ -212,7 +221,9 @@ def transformSourceData(Template, source_df):
     "demographic_language_3",
     "demographic_language_3_degree",
     "moca_mis",
-    "ms_famhxad"
+    "ms_famhxad",
+    "last_dx",
+    "changed_uds_status"
 ]
     source_df = source_df[trac_var_names]
     #print(source_df["demographic_marital_status_combo"])

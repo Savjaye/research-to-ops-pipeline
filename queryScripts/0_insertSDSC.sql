@@ -1,1 +1,1 @@
-\copy public.test FROM '/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables/outv1.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', NULL '', QUOTE '"');
+\copy public.tbl_sdsc_staging FROM '/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables/outv1.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', NULL '', QUOTE '"');

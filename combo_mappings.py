@@ -379,3 +379,8 @@ OCCUPATION_MAP = {
     731: "Worked while incarcerated",
 }
 
+STATUS_MAP = {
+    1: "Annual in-person UDS follow-up",
+    2: "Annual UDS follow-up by telephone", 
+    3: "Minimal contact"
+}

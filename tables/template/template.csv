@@ -81,3 +81,8 @@ tbl_subject_screen,ms_famhxad,varchar(255),"""Yes"" if ((pd.notna(row[""FHS01ETP
 ,,,,A3,FHS01ETPR,
 ,,,,A3,FHS01ETSEC,
 ,,,,A3,RID,
+,,,,D1,RID,
+,,,,D1,VISCODE,
+tbl_subject,last_dx,varchar(255),,D1,DX1,
+,,,,M1,RID,
+tbl_subject,changed_uds_status,varchar(255),"STATUS_MAP.get(int(row[""changed_uds_status""]), None) if pd.notna(row[""changed_uds_status""]) else None",M1,STATUS,
