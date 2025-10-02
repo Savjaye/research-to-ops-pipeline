@@ -1,8 +1,5 @@
-DROP TABLE public.tbl_sdsc_staging;
-CREATE TABLE public.version_control (
-    migration_id SERIAL,  
-    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    subject_id INTEGER,
+--DROP TABLE public.tbl_sdsc_staging;
+CREATE TABLE public.tbl_sdsc_staging (
     adrc_long_id INTEGER,
     ad_disease_modifying VARCHAR(255),
     ad_symptomatic VARCHAR(255),
@@ -10,7 +7,7 @@ CREATE TABLE public.version_control (
     demographic_language_testing VARCHAR(255),
     demographic_marital_status_combo VARCHAR(255),
     demographic_sex_at_birth VARCHAR(255),
-    dob DATE,
+    dob DATE,  
     education_highest VARCHAR(255),
     demographic_race VARCHAR(255)[],
     ms_cancer VARCHAR(255),
@@ -25,20 +22,14 @@ CREATE TABLE public.version_control (
     mmse INTEGER,
     lst_drs INTEGER,
     lst_moca VARCHAR(255),
-    cdrglob double precision,
-	screen_contact_memory_prob VARCHAR(255),
     contact_memory_prob VARCHAR(255),
     referral_source_combo VARCHAR(255),
     referral_comments TEXT, 
     relationship_with_subject VARCHAR(255),
-    contact_memory_prob_onset_yr DATE,
+    visit_date DATE,
     yr_in_study INTEGER,
-    visits_mmse INTEGER, 
-    visits_mmse_date DATE, 
-    visits_moca INTEGER, 
-    visits_moca_date DATE, 
-    visits_drs INTEGER, 
-    visits_drs_date DATE,
+    c1_visit_date DATE, 
+    cdrglob double precision,
     naccid VARCHAR(15),
     subject_status_adrc_xfer_name VARCHAR(255),
     subject_status_adrc_xfer VARCHAR(255),
@@ -49,7 +40,6 @@ CREATE TABLE public.version_control (
     demographic_language_3 VARCHAR(255),
     demographic_language_3_degree VARCHAR(255),
     moca_mis INTEGER,
-    ms_famhxad VARCHAR(255),
-    last_dx VARCHAR(255)
-
+	ms_famhxad VARCHAR(255),
+	changed_uds_status VARCHAR(255)
 );

@@ -7,11 +7,10 @@ import combo_mappings
 # --- Notes for Adding New Fields ---
 # 1. Update the template file (tables/template/template.csv)
 # 2. Update public.tbl_sdsc_staging
-# 3. Add the TRAC field to 'trac_var_name' (variable in this script that ensure the output (outv1.csv matches the schema of the read-in table)).
-# 4. Merge the new sdsc table in with the rest (if applicable)
+# 3. Add the TRAC field to 'trac_var_name' (the variable that ensures the column order of outv1.csv matches the schema of the read-in table)
+# 4. Merge the new sdsc table into source_df (if applicable)
     # don't forget to add the new table to the df dict!
-# 5.If pulling from a new SDSC table, update readSourceData().
-# 6. If inserting into a new TRAC table, update SQL procedures.
+# 5. If inserting into a new TRAC table, update SQL procedures.
 
 
 # --- this functions flips through each of the queries in './queryScripts' and executes them on the server using ./operationResearchMigration ---
@@ -32,7 +31,7 @@ def executeQueryLocaly(queryPath, scriptPath, outPath=None):
             cmd = [str(script_path), str(query), out_dir]
         else:
                 cmd = [str(script_path), str(query)]
-        print(f"Enter Password To  Run {query} Command Locally")
+        print(f"Enter Password To Run {query} Command On the Server")
         subprocess.run(cmd, check=True)
 
 # ---- Reads raw CSV's, preprocesses (if necessary), merges into single dataframe, selects data associated with most recent year ----
@@ -71,7 +70,6 @@ def readSourceData(Template):
      enroll = pd.read_csv("./tables/sourceTables/uds_naccenroll.csv", low_memory=False, na_values=-4)
      d1 = pd.read_csv("./tables/sourceTables/uds_d1clindx.csv", low_memory=False, na_values=-4)
      lhq = pd.read_csv("./tables/sourceTables/uds_lhqrev.csv", low_memory=False, na_values=-4)
-     d1= pd.read_csv("./tables/sourceTables/uds_d1consdx.csv", low_memory=False, na_values=-4)
      m1= pd.read_csv("./tables/sourceTables/uds_m1mstone.csv", low_memory=False, na_values=-4)
     
     # --- organize all the loaded dataframes ---
@@ -87,7 +85,6 @@ def readSourceData(Template):
                 "b4" : b4,
                 "enroll" : enroll, 
                 "lhq" : lhq,
-                "d1": d1,
                 "m1": m1
      }
     # --- subset each table to extract only the required fields (as defined in template.csv)
@@ -103,30 +100,31 @@ def readSourceData(Template):
           df_dict[name] = df # save the subsetted data to the dict 
     
     # Now perform individual merges:
-     print("!! GETTING ERROR ON MERGE? - Did you add the columns you are joining ON to the template (tmp)?")
-     df_temp1 = pd.merge(df_dict["a1"], df_dict["c1"], on=["RID", "VISCODE"], how="outer")
-     df_temp2 = pd.merge(df_temp1, df_dict["a4a"], on=["RID", "VISCODE"], how="outer")
-     df_temp3 = pd.merge(df_temp2, df_dict["a5"], on=["RID"], how="outer")
-     df_temp4 = pd.merge(df_temp3, df_dict["a2"], on=["RID", "VISCODE"], how="outer")
-     df_temp5 = pd.merge(df_temp4, df_dict["registry"], on=["RID", "VISCODE"], how="outer")
-     df_temp6 = pd.merge(df_temp5, df_dict["b4"], on=["RID", "VISCODE"], how="outer")
-     df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
-     df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
-     df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID"], how="outer")
-     df_temp10 = pd.merge(df_temp9, df_dict["d1"], on=["RID", "VISCODE"], how="outer")
-     df_temp11 = pd.merge(df_temp10, df_dict["m1"], on=["RID"], how="outer")
-     source_df = pd.merge(df_temp11, df_dict["roster"], on="RID", how="outer")
+     try: 
+        df_temp1 = pd.merge(df_dict["a1"], df_dict["c1"], on=["RID", "VISCODE"], how="outer")
+        df_temp2 = pd.merge(df_temp1, df_dict["a4a"], on=["RID", "VISCODE"], how="outer")
+        df_temp3 = pd.merge(df_temp2, df_dict["a5"], on=["RID"], how="outer")
+        df_temp4 = pd.merge(df_temp3, df_dict["a2"], on=["RID", "VISCODE"], how="outer")
+        df_temp5 = pd.merge(df_temp4, df_dict["registry"], on=["RID", "VISCODE"], how="outer")
+        df_temp6 = pd.merge(df_temp5, df_dict["b4"], on=["RID", "VISCODE"], how="outer")
+        df_temp7 = pd.merge(df_temp6, df_dict["enroll"], on=["RID"], how="outer")
+        df_temp8 = pd.merge(df_temp7, df_dict["lhq"], on=["RID", "VISCODE"], how="outer")
+        df_temp9 = pd.merge(df_temp8, df_dict["a3"], on=["RID"], how="outer")
+        df_temp10 = pd.merge(df_temp9, df_dict["m1"], on=["RID"], how="outer")
+        source_df = pd.merge(df_temp10, df_dict["roster"], on="RID", how="outer")
+     except MemoryError:
+        print("Failed to merge table. Did you remember to include the RID and the VISCODE in the template.csv")
 
      
 
      # grab out the data associated with the most recent year
      source_df = source_df.dropna(subset=["VISCODE"]) # remove anyone with a missing year
      source_df["VISIT"] = source_df["VISCODE"].str.extract(r"y(\d+)", expand=False).astype(int) # extract their visit year 
-     most_recent_vis_source_df = source_df.loc[source_df.groupby("RID")["VISIT"].idxmax()] # grad row associated with most recent visit year
+     most_recent_vis_source_df = source_df.loc[source_df.groupby("RID")["VISIT"].idxmax()] # grab row associated with most recent visit year
      most_recent_vis_source_df.dropna(subset="REGTRYID", inplace = True)
 
      # export for bug testing 
-     most_recent_vis_source_df.to_csv("./tables/output/sdsc.csv", index= False)
+     #most_recent_vis_source_df.to_csv("./tables/output/sdsc.csv", index= False)
      print("SDSC Data Accessed")
      return most_recent_vis_source_df
      
@@ -143,11 +141,11 @@ def transformSourceData(Template, source_df):
 
     # add calculated variables
     calculated_vars = [field for field in tmp["trac_var_name"].unique() if tmp.loc[tmp["trac_var_name"] == field, "transformation"].notna().all() and pd.notnull(field)]
-    print(f"calculated variables: {calculated_vars}")
+    print(f"\n calculated variables: {calculated_vars}")
+    # apply the transformation code to the calculated variables
     for field in calculated_vars:
-         print(field)
          transformation_code = tmp[tmp["trac_var_name"] == field]["transformation"].iloc[0]
-
+        # create a dictionary of the combo tables that the transformations reference
          combo_context = {
             "pd": pd,
             "row": None,
@@ -168,18 +166,15 @@ def transformSourceData(Template, source_df):
             "STATUS_MAP": combo_mappings.STATUS_MAP
             }
          source_df[field] = source_df.apply(lambda row: eval(transformation_code, {**combo_context, "row": row}),axis=1)
-         #for index, row in source_df.iterrows():
-            #source_df.at[index, field] = eval(transformation_code)
 
-    # remove the fields that dont have a direct mapping ex: RID, VISCODE, any fields that are combined with others 
+    # capture the fields that don't have a direct mapping ex: RID, VISCODE, any fields that are combined with others 
     sdsc_fields_without_trac_mapping = [field for field in tmp["sdsc_var_name"] if tmp[tmp["sdsc_var_name"]==field]["trac_var_name"].isnull().all() and pd.notnull(field) and field != "VISITDATE"] # VISITDATE will be converted to VISITDATE_x and VISITDATE_y so we want to remove dups
-    print(f"MISSING MAP {sdsc_fields_without_trac_mapping}")
-    #remove RID column 
+    # drop extra fields
     source_df.drop(columns=sdsc_fields_without_trac_mapping, inplace=True)
 
 
 
-    # select out proper field names and order correctly -- **note: ordering is necessary for loading the table into the staging table into TRAC using the \copy command
+    # select out proper field names and order correctly -- **note: ordering is necessary for loading into the TRAC staging table using the \copy command
     trac_var_names = [
     "adrc_long_id",
     "ad_disease_modifying",
@@ -222,11 +217,11 @@ def transformSourceData(Template, source_df):
     "demographic_language_3_degree",
     "moca_mis",
     "ms_famhxad",
-    "last_dx",
     "changed_uds_status"
-]
+]  
+    # apply proper ordering
     source_df = source_df[trac_var_names]
-    #print(source_df["demographic_marital_status_combo"])
+ 
 
     # Convert all float64 columns that have only whole numbers to Int64
     source_df = source_df.convert_dtypes()
@@ -281,17 +276,32 @@ def transformSourceData(Template, source_df):
     "demographic_language_2_degree",
     "demographic_language_3",
     "demographic_language_3_degree",
-    "ms_famhxad"
+    "ms_famhxad",
+    "moca_mis",
+    "changed_uds_status"
 ]
     actual_cols = source_df.columns.tolist()
 
     missing = [col for col in expected_cols if col not in actual_cols]
     extra = [col for col in actual_cols if col not in expected_cols]
 
-    print("Missing columns:", missing)
-    print("Unexpected columns:", extra)
+    print("\nMissing columns:", missing)
+    print("\nUnexpected columns:", extra)
 
+# process d1s seperatly: there is a large backlog of d1 forms and they are often not submitted until after the 
+# NEXT year's visit. our main pipeline only deals with the most recent VISCODE per RID, 
+# so late prior-year D1s would fail to ever be captured
+def makeD1(Template):
 
+    tmp = Template
+    tmp = tmp.loc[tmp['sdsc_table']== 'D1']
+
+    d1= pd.read_csv("./tables/sourceTables/uds_d1consdx.csv", low_memory=False, na_values=-4)
+    valid_renames = tmp.loc[tmp["trac_var_name"].notna() & tmp["sdsc_var_name"].notna()]
+    rename_dict = dict(zip(valid_renames["sdsc_var_name"], valid_renames["trac_var_name"]))
+    d1.rename(columns=rename_dict, inplace=True)
+    d1 = d1[tmp["trac_var_name"]]
+    d1.to_csv("./tables/output/d1.csv", index= False)
 
 
 # --- Securely copies transformed CSV to server ---
@@ -299,15 +309,26 @@ def copyTransfomedDataToServer():
      cmd = ["scp", "-i", "~/.ssh/id_adrc_rsa", "-P", "9221",
             "./tables/output/outv1.csv",
             "adrc-admin@adrc-trac.ucsd.edu:/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables"]
-     print("Enter Password To Copy Data To Server")
+     
+     print("Enter Password To Copy outv1.csv To Server")
      subprocess.run(cmd, check=True)
+     cmd_d1 = ["scp", "-i", "~/.ssh/id_adrc_rsa", "-P", "9221",
+            "./tables/output/d1.csv",
+            "adrc-admin@adrc-trac.ucsd.edu:/home/adrc-admin/adrc/deliverables/sjhScriptsQueries/tables"]
+     print("Enter Password To Copy d1.csv To Server")
+     subprocess.run(cmd_d1, check=True)
+
 
 # --- MAIN SCRIPT EXECUTION ---
 transformed_table_name = "outv1.csv"
 template = pd.read_csv("./tables/template/template.csv")
-sdsc_df = readSourceData(template)
-transformSourceData(template, sdsc_df)
+main_template = template.loc[template['sdsc_table']!= 'D1']
+sdsc_df = readSourceData(main_template)
+transformSourceData(main_template, sdsc_df)
+makeD1(template)
 #copyTransfomedDataToServer()
+
+
 
 # before you run this, your 'test' table has to have all the columns listed on outv1.csv
 #executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")

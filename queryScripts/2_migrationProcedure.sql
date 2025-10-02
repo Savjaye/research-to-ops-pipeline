@@ -60,10 +60,10 @@ BEGIN
         demographic_language_2 = COALESCE(t.demographic_language_2, s.demographic_language_2),
         demographic_language_2_degree = COALESCE(t.demographic_language_2_degree, s.demographic_language_2_degree), 
         demographic_language_3 = COALESCE(t.demographic_language_3, s.demographic_language_3),
-        demographic_language_3_degree = COALESCE(t.demographic_language_3_degree, s.demographic_language_3_degree)
-    FROM public.test AS t
+        demographic_language_3_degree = COALESCE(t.demographic_language_3_degree, s.demographic_language_3_degree),
+		changed_uds_status = COALESCE(t.changed_uds_status)
+    FROM public.tbl_sdsc_staging AS t
     WHERE s.adrc_long_id = t.adrc_long_id;
-
 
     INSERT INTO adrc.tbl_subject_screen(subject_id,
     ad_disease_modifying,
@@ -85,7 +85,7 @@ BEGIN
     t.ms_stroke,
     t.contact_memory_prob,
     t.ms_famhxad
-    FROM public.test AS t
+    FROM public.tbl_sdsc_staging AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE s.id NOT IN (SELECT DISTINCT subject_id FROM adrc.tbl_subject_screen);
 
@@ -100,7 +100,7 @@ BEGIN
         ms_stroke = COALESCE(t.ms_stroke, sc.ms_stroke),
         contact_memory_prob = COALESCE(t.contact_memory_prob, sc.contact_memory_prob),
         ms_famhxad = COALESCE(t.ms_famhxad, sc.ms_famhxad)
-    FROM public.test AS t
+    FROM public.tbl_sdsc_staging AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE sc.subject_id = s.id;
 
@@ -108,14 +108,14 @@ BEGIN
         SET 
         referral_source_combo = COALESCE(t.referral_source_combo, rt.referral_source_combo),
         referral_comments = COALESCE(t.referral_comments, rt.referral_comments)
-    FROM public.test AS t
+    FROM public.tbl_sdsc_staging AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE rt.subject_id = s.id;
 
     UPDATE adrc.tbl_subject_contacts AS c
         SET 
         relationship_with_subject = COALESCE(t.relationship_with_subject, c.relationship_with_subject)
-    FROM public.test AS t
+    FROM public.tbl_sdsc_staging AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE c.subject_id = s.id AND c.contact_type = 'Informant';
 
@@ -130,10 +130,18 @@ BEGIN
         drs = COALESCE(t.lst_drs, v.drs),
         drs_date = COALESCE(t.c1_visit_date, v.drs_date),
         moca_mis = COALESCE(t.moca_mis, v.moca_mis)
-    FROM public.test AS t
+    FROM public.tbl_sdsc_staging AS t
     LEFT JOIN adrc.tbl_subject AS s ON t.adrc_long_id = s.adrc_long_id
     WHERE v.subject_id = s.id AND v.yr_in_study=t.yr_in_study;
+	
+	UPDATE adrc.tbl_visits AS v
+        SET 
+		dx = d.dx
+    FROM public.tbl_d1_staging AS d
+    LEFT JOIN adrc.tbl_subject AS s ON d.adrc_long_id = s.adrc_long_id
+    WHERE v.subject_id = s.id AND v.yr_in_study=d.yr_in_study;
+	
 
-    DELETE FROM public.test;
+    DELETE FROM public.tbl_sdsc_staging;
 
 END $$;

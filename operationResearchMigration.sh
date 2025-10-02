@@ -25,7 +25,6 @@ ssh -i ~/.ssh/id_adrc_rsa -p 9221 adrc-admin@adrc-trac.ucsd.edu << EOF
 
     
     export PGPASSWORD=\$POSTGRES_SUPER_PASSWORD
-    (echo "password: '\$POSTGRES_SUPER_PASSWORD'")
 
     if [[ -z \$outTablePath ]]; then 
         psql -h localhost -U adrc-admin -d adrc -f /home/adrc-admin/adrc/deliverables/sjhScriptsQueries/queryScripts/$(basename "$pathToQuery")
