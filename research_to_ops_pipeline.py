@@ -326,9 +326,9 @@ main_template = template.loc[template['sdsc_table']!= 'D1']
 sdsc_df = readSourceData(main_template)
 transformSourceData(main_template, sdsc_df)
 makeD1(template)
-#copyTransfomedDataToServer()
+copyTransfomedDataToServer()
 
 
 
 # before you run this, your 'test' table has to have all the columns listed on outv1.csv
-#executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
+executeQueryLocaly("./queryScripts", "./operationResearchMigration.sh")
