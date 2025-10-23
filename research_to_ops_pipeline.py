@@ -138,6 +138,8 @@ def transformSourceData(Template, source_df):
     rename_dict = dict(zip(valid_renames["sdsc_var_name"], valid_renames["trac_var_name"]))
     source_df.rename(columns=rename_dict, inplace=True)
 
+    source_df.to_csv("./tables/output/sdsc.csv", index= False)
+
 
     # add calculated variables
     calculated_vars = [field for field in tmp["trac_var_name"].unique() if tmp.loc[tmp["trac_var_name"] == field, "transformation"].notna().all() and pd.notnull(field)]
@@ -145,7 +147,9 @@ def transformSourceData(Template, source_df):
     # apply the transformation code to the calculated variables
     for field in calculated_vars:
          transformation_code = tmp[tmp["trac_var_name"] == field]["transformation"].iloc[0]
+
         # create a dictionary of the combo tables that the transformations reference
+        # notes for updating: if a new map is added to combo_mappings.py, be sure to add it here. 
          combo_context = {
             "pd": pd,
             "row": None,
@@ -163,11 +167,12 @@ def transformSourceData(Template, source_df):
             "RACE_MAP": combo_mappings.RACE_MAP,
             "GENDER_MAP": combo_mappings.GENDER_MAP,
             "OCCUPATION_MAP": combo_mappings.OCCUPATION_MAP,
-            "STATUS_MAP": combo_mappings.STATUS_MAP
+            "STATUS_MAP": combo_mappings.STATUS_MAP,
+            "race_fields": combo_mappings.RACE_FIELDS
             }
          source_df[field] = source_df.apply(lambda row: eval(transformation_code, {**combo_context, "row": row}),axis=1)
 
-    # capture the fields that don't have a direct mapping ex: RID, VISCODE, any fields that are combined with others 
+    # capture the fields that don't have a direct mapping ex: RID, VISCODE, any fields thsat are combined with others 
     sdsc_fields_without_trac_mapping = [field for field in tmp["sdsc_var_name"] if tmp[tmp["sdsc_var_name"]==field]["trac_var_name"].isnull().all() and pd.notnull(field) and field != "VISITDATE"] # VISITDATE will be converted to VISITDATE_x and VISITDATE_y so we want to remove dups
     # drop extra fields
     source_df.drop(columns=sdsc_fields_without_trac_mapping, inplace=True)

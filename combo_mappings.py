@@ -384,3 +384,15 @@ STATUS_MAP = {
     2: "Annual UDS follow-up by telephone", 
     3: "Minimal contact"
 }
+
+RACE_FIELDS = ["RACEAIAN", "RACEASIAN", "RACEBLACK", "ETHISPANIC", "RACEMENA", "RACENHPI", "RACEWHITE"]
+
+RACE_MAP = {
+    "RACEAIAN": "American Indian or Alaska Native",
+    "RACEASIAN": "Asian",
+    "RACEBLACK": "Black or African American", 
+    "ETHISPANIC": "Hispanic or Latino", 
+    "RACEMENA": "Middle Eastern or North African", 
+    "RACENHPI": "Native Hawaiian or other Pacific Islander",
+    "RACEWHITE": "White"
+}

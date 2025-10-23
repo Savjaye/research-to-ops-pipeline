@@ -124,6 +124,7 @@ BEGIN
         contact_memory_prob = COALESCE(t.contact_memory_prob, v.contact_memory_prob),
         contact_memory_prob_onset_yr = COALESCE(t.visit_date, v.contact_memory_prob_onset_yr),
         mmse = COALESCE(t.mmse, v.mmse),
+        visit_date = COALESCE(t.visit_date, v.visit_date),
         mmse_date = COALESCE(t.c1_visit_date, v.mmse_date),
         moca_date = COALESCE(t.c1_visit_date, v.moca_date),
         moca =COALESCE(NULLIF(t.lst_moca, '') :: INTEGER, v.moca), -- lst_moca is stored as a VARCHAR in tbl_subject so we need to convert it to an integer
